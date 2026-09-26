@@ -1,0 +1,17 @@
+# Project datasets
+data/raw/*
+data/staging/*
+data/processed/*
+data/rejected/*
+
+# Keep folder structure
+!data/raw/.gitkeep
+!data/staging/.gitkeep
+!data/processed/.gitkeep
+!data/rejected/.gitkeep
+
+.venv/
+.env
+__pycache__/
+*.pyc
+

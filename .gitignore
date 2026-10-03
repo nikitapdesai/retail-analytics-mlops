@@ -10,8 +10,14 @@ data/rejected/*
 !data/processed/.gitkeep
 !data/rejected/.gitkeep
 
-.venv/
-.env
+# Airflow local environment and generated files
+airflow/.env
+airflow/logs/
+airflow/config/airflow.cfg
+airflow/dags/__pycache__/
 __pycache__/
 *.pyc
+
+.venv/
+.env
 

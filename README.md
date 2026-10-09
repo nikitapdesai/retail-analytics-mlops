@@ -30,6 +30,12 @@ The project demonstrates a retail data engineering workflow, from raw data inges
 | Dashboard | Streamlit |
 | Database connectivity | psycopg2 |
 | Configuration management | python-dotenv |
+| Machine learning | Scikit-learn, Pandas |
+| NLP / model serving | MLflow, FastAPI, Uvicorn |
+| Model registry | MLflow Model Registry |
+| Model containerization | Docker |
+| Prediction monitoring | CSV-based prediction logging |
+
 
 ## Data Processing Results
 
@@ -471,20 +477,83 @@ The dashboard provides an overview of sales performance and customer purchasing 
 
 The dashboard values are based on the warehouse data available when the project was validated and may change if the dataset or warehouse is reloaded.
 
+## MLOps Extension: Customer Churn Prediction
+
+The project extends its retail analytics pipeline with a machine-learning workflow for identifying customers who may have stopped purchasing. The extension covers model training, evaluation, experiment tracking, model registration, API deployment, containerization, and prediction logging.
+
+### Churn Definition and Features
+
+Churn is defined as a customer having `recency_days > 90`. The model uses four features:
+
+* `order_count`
+* `total_quantity`
+* `frequency`
+* `monetary_value`
+
+`recency_days` is excluded from the input features to avoid directly leaking the target definition into the model.
+
+### Model Training and Evaluation
+
+Logistic Regression and Random Forest were evaluated as candidate classifiers. Logistic Regression achieved the stronger overall results in the recorded experiment.
+
+| Metric    | Logistic Regression |
+| --------- | ------------------: |
+| Accuracy  |              73.85% |
+| Precision |              61.71% |
+| Recall    |              57.24% |
+| F1-score  |              59.39% |
+| ROC-AUC   |              79.33% |
+
+These results provide a baseline for future model comparisons. Evaluation on newly labelled data is needed to determine whether model performance changes over time.
+
+### MLflow Experiment Tracking and Registry
+
+MLflow is used to record model experiments and manage registered model versions. The selected model is registered as `CustomerChurnModel`, allowing the API to load a version from the model registry.
+
+### FastAPI Prediction Service
+
+The FastAPI application in `src/api/app.py` exposes a `/predict` endpoint that accepts customer features and returns a churn prediction and probability.
+
+Example request:
+
+```json
+{
+  "order_count": 7,
+  "total_quantity": 2458,
+  "frequency": 7,
+  "monetary_value": 4310
+}
+```
+
+An observed test response classified this example as `0` (not churned), with a predicted churn probability of approximately `0.0558`. This is an example prediction, not a guarantee of future customer behaviour.
+
+### Docker Deployment
+
+The prediction API is packaged as the `customer-churn-api` Docker image and runs in the `customer-churn-container` container. The service exposes port `8000` and connects to the MLflow tracking server to load the registered model.
+
+### Prediction Monitoring
+
+The monitoring module in `src/monitoring/monitor.py` records prediction activity in `data/monitoring/predictions.csv`. The log contains timestamps, input features, predicted labels, and churn probabilities.
+
+The CSV logging workflow was verified with successful API requests. Automated drift detection and retraining are not currently implemented.
+
+### Retraining Strategy
+
+Retraining should be considered when evaluation on newly labelled data shows meaningful performance degradation, when customer behaviour changes substantially, or when the business definition of churn changes. Candidate models should be compared using consistent validation metrics before a new version is registered and deployed.
+
+See [`docs/monitoring_and_retraining.md`](docs/monitoring_and_retraining.md) for the proposed monitoring and retraining strategy.
+
+
 ## Limitations and Future Improvements
 
 Potential improvements to the platform include:
 
-- Adding automated unit and integration tests for the ingestion, validation, transformation, and loading stages.
-- Implementing stronger idempotency for fact-table loading.
-- Adding automated refresh tasks for the sales and customer analytical marts.
-- Adding explicit database schema creation and version-controlled SQL scripts.
-- Introducing data quality monitoring and pipeline failure alerts.
-- Adding incremental data loading for new transactions.
-- Extending the project with customer churn or repeat-purchase prediction.
-- Integrating MLflow for model tracking and model registry management.
-- Exposing prediction services through FastAPI and packaging them with Docker.
-- Adding monitoring metrics and defined retraining criteria for future ML workflows.
+* Implement automated data-drift detection and monitoring dashboards.
+* Evaluate model performance against newly labelled customer outcomes.
+* Automate model retraining, validation, and conditional registry updates.
+* Add API input validation, automated integration tests, and service health monitoring.
+* Implement a controlled model deployment and rollback process.
+
 
 ## Learning Outcomes
 

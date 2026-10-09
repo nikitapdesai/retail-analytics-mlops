@@ -21,3 +21,16 @@ __pycache__/
 .venv/
 .env
 
+
+# Local MLflow tracking database and artifacts
+mlflow.db
+mlflow.db-shm
+mlflow.db-wal
+mlruns/
+mlartifacts/
+
+# Generated prediction monitoring logs
+data/monitoring/*.csv
+
+# Python cache directories
+__pycache__/
